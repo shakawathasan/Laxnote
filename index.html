@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexNote — My AI Law Notebook</title>
+    <meta name="description" content="A personal AI law notebook for LLB students to record lectures, organize structured legal notes in Bangla and English, perform OCR, and research legal concepts." />
+    <meta property="og:title" content="LexNote — My AI Law Notebook" />
+    <meta property="og:description" content="Personal AI legal notebook for LLB students supporting Bangla, English, voice dictation, OCR, and FIRAC case briefs." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Google Fonts: Playfair Display, Inter, Noto Sans Bengali, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+
+    <!-- PDF.js library for in-browser client-side PDF extraction (non-blocking) -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" onload="if (window['pdfjs-dist/build/pdf']) { window.pdfjsLib = window['pdfjs-dist/build/pdf']; window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }"></script>
+
+    <!-- Tesseract.js library for free in-browser OCR (non-blocking) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+    <!-- PWA & Android WebAPK Meta Tags -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <meta name="theme-color" content="#23483F" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="LexNote" />
+
+    <link rel="stylesheet" href="/src/style.css" />
+    <script>
+      // Register Service Worker for PWA and WebAPK installation
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.warn('ServiceWorker registration error:', err);
+          });
+        });
+      }
+    </script>
+  </head>
+  <body class="h-full bg-canvas text-primary font-sans antialiased selection:bg-champagne/30 selection:text-forest">
+    <div id="app" class="h-full flex flex-col md:flex-row overflow-hidden">
+      <!-- Loading state / initial hydration -->
+      <div id="initial-loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-canvas transition-opacity duration-300">
+        <div class="w-12 h-12 border-2 border-forest border-t-transparent rounded-full animate-spin mb-4"></div>
+        <h1 class="font-serif text-xl font-bold text-forest">LexNote</h1>
+        <p class="text-xs text-secondary mt-1 font-sans">Initializing your local law notebook...</p>
+      </div>
+
+      <!-- Left Sidebar (Desktop) -->
+      <aside id="sidebar" class="hidden md:flex flex-col w-64 lg:w-72 border-r border-rule bg-paper shrink-0 z-30 transition-all duration-200">
+        <!-- Brand Wordmark (Strict 1-element brand) -->
+        <div class="h-16 px-6 flex items-center justify-between border-b border-rule">
+          <a href="#" id="brand-link" class="font-serif text-xl font-bold tracking-tight text-forest flex items-center gap-2">
+            <svg class="w-6 h-6 text-forest shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+              <path d="M6 6h10"></path>
+              <path d="M6 10h10"></path>
+              <path d="M6 14h6"></path>
+            </svg>
+            <span>LexNote</span>
+          </a>
+          <button id="theme-toggle-btn" class="p-2 text-secondary hover:text-primary rounded-md transition-colors" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">
+            <svg id="theme-icon-sun" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            <svg id="theme-icon-moon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          </button>
+        </div>
+
+        <!-- Quick Action Button -->
+        <div class="p-4 border-b border-rule">
+          <button id="quick-create-note-btn" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-forest text-white font-medium text-sm rounded-lg hover:bg-forest/90 shadow-sm transition-all active:scale-[0.99]">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            <span>New Law Note</span>
+          </button>
+        </div>
+
+        <!-- Main Navigation Links -->
+        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <button data-view="dashboard" class="nav-item active w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span>Dashboard</span>
+          </button>
+
+          <button data-view="library" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/></svg>
+            <span>Law Library</span>
+            <span id="nav-notes-count" class="ml-auto text-xs font-mono text-secondary tabular-nums">0</span>
+          </button>
+
+          <button data-view="voice" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+            <span>Voice & Dictation</span>
+          </button>
+
+          <button data-view="documents" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+            <span>Document & OCR</span>
+          </button>
+
+          <button data-view="ask" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+            <span>Ask My Notebook</span>
+          </button>
+
+          <button data-view="research" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            <span>Case Briefs (FIRAC)</span>
+          </button>
+
+          <button data-view="dictionary" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+            <span>Legal Dictionary</span>
+          </button>
+
+          <div class="pt-4 mt-4 border-t border-rule">
+            <button data-view="settings" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors">
+              <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span>Settings & Sync</span>
+            </button>
+          </div>
+        </nav>
+
+        <!-- Subjects Quick List -->
+        <div class="p-3 border-t border-rule bg-canvas/40">
+          <div class="flex items-center justify-between px-2 mb-1.5">
+            <span class="text-xs font-semibold uppercase tracking-wider text-secondary">Law Subjects</span>
+            <button id="add-subject-modal-trigger" class="text-xs text-forest hover:underline" title="Add Subject">+ New</button>
+          </div>
+          <div id="sidebar-subjects-list" class="space-y-0.5 max-h-36 overflow-y-auto text-xs text-secondary">
+            <!-- Dynamically populated subjects -->
+          </div>
+        </div>
+
+        <!-- Local Privacy Status -->
+        <div class="px-4 py-3 border-t border-rule text-xs text-secondary flex items-center justify-between">
+          <span class="flex items-center gap-1.5">
+            <span class="inline-block w-2 h-2 rounded-full bg-forest"></span>
+            <span>100% Local IndexedDB</span>
+          </span>
+          <span class="font-mono text-[10px]">v1.0</span>
+        </div>
+      </aside>
+
+      <!-- Main Workspace Container -->
+      <div class="flex-1 flex flex-col h-full overflow-hidden bg-canvas">
+        <!-- Top Navigation Bar (Strict 3-zone Top Bar Contract) -->
+        <header class="h-16 border-b border-rule bg-paper flex items-center justify-between gap-8 px-4 sm:px-6 shrink-0 z-20">
+          <!-- Zone 1: Brand wordmark (Mobile & Desktop) -->
+          <div class="flex items-center gap-3">
+            <button id="mobile-menu-toggle" class="md:hidden p-2 text-secondary hover:text-primary rounded-md" aria-label="Open menu">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            </button>
+            <span id="page-heading" class="font-serif text-lg font-bold text-forest whitespace-nowrap shrink-0">LexNote — Law Notebook</span>
+          </div>
+
+          <!-- Zone 2: Navigation Links (Clean single-line prose, 4-5 items) -->
+          <nav class="hidden lg:flex items-center gap-6 text-sm font-medium text-secondary">
+            <a href="#dashboard" data-nav="dashboard" class="hover:text-primary transition-colors whitespace-nowrap shrink-0">Home</a>
+            <a href="#library" data-nav="library" class="hover:text-primary transition-colors whitespace-nowrap shrink-0">Library</a>
+            <a href="#voice" data-nav="voice" class="hover:text-primary transition-colors whitespace-nowrap shrink-0">Dictation</a>
+            <a href="#research" data-nav="research" class="hover:text-primary transition-colors whitespace-nowrap shrink-0">FIRAC Briefs</a>
+            <a href="#dictionary" data-nav="dictionary" class="hover:text-primary transition-colors whitespace-nowrap shrink-0">Dictionary</a>
+          </nav>
+
+          <!-- Zone 3: 1 Primary Action Point (Search / Quick Record) -->
+          <div class="flex items-center gap-3 shrink-0">
+            <div class="relative hidden sm:block">
+              <input type="search" id="global-search-input" placeholder="Search notes, sections, cases..." class="w-48 md:w-64 pl-8 pr-3 py-1.5 text-xs bg-canvas border border-rule rounded-md focus:outline-none focus:border-forest transition-colors text-primary placeholder:text-secondary">
+              <svg class="w-3.5 h-3.5 text-secondary absolute left-2.5 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+            <a href="/law-notebook-editor.zip" download="law-notebook-editor.zip" id="download-zip-top-btn" class="flex items-center gap-1.5 px-3 py-1.5 border border-forest/40 bg-paper text-forest text-xs font-semibold rounded-md hover:bg-forest hover:text-white transition-all whitespace-nowrap shrink-0 shadow-xs" title="Download Complete Project Source Code (.zip)">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              <span>Download ZIP</span>
+            </a>
+            <button id="pwa-install-top-btn" class="flex items-center gap-1.5 px-3 py-1.5 border border-rule bg-canvas text-secondary hover:text-primary text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 shadow-xs" title="Install on Android or Desktop">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" x2="12.01" y1="18" y2="18"/></svg>
+              <span>Install PWA</span>
+            </button>
+            <button id="quick-record-top-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-forest text-white text-xs font-medium rounded-md hover:bg-forest/90 transition-colors whitespace-nowrap shrink-0 shadow-sm">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+              <span>Record</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Viewport Workspace / View Container -->
+        <main id="main-content" class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8">
+          <!-- Views rendered dynamically via JavaScript into view-containers -->
+          <div id="view-dashboard" class="view-panel"></div>
+          <div id="view-library" class="view-panel hidden"></div>
+          <div id="view-note-editor" class="view-panel hidden"></div>
+          <div id="view-voice" class="view-panel hidden"></div>
+          <div id="view-documents" class="view-panel hidden"></div>
+          <div id="view-ask" class="view-panel hidden"></div>
+          <div id="view-research" class="view-panel hidden"></div>
+          <div id="view-dictionary" class="view-panel hidden"></div>
+          <div id="view-settings" class="view-panel hidden"></div>
+        </main>
+
+        <!-- Mobile Bottom Navigation Bar (Fixed for responsive convenience) -->
+        <div id="mobile-bottom-nav" class="md:hidden h-14 border-t border-rule bg-paper flex items-center justify-around px-2 shrink-0 z-30">
+          <button data-view="dashboard" class="mobile-nav-btn flex flex-col items-center justify-center text-secondary py-1 px-2 text-[10px]">
+            <svg class="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span>Home</span>
+          </button>
+          <button data-view="library" class="mobile-nav-btn flex flex-col items-center justify-center text-secondary py-1 px-2 text-[10px]">
+            <svg class="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/></svg>
+            <span>Library</span>
+          </button>
+          <button data-view="voice" class="mobile-nav-btn flex flex-col items-center justify-center text-forest font-semibold py-1 px-2 text-[10px]">
+            <div class="w-8 h-8 rounded-full bg-forest text-white flex items-center justify-center -mt-3 shadow-md">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+            </div>
+            <span class="mt-0.5">Record</span>
+          </button>
+          <button data-view="ask" class="mobile-nav-btn flex flex-col items-center justify-center text-secondary py-1 px-2 text-[10px]">
+            <svg class="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+            <span>Ask</span>
+          </button>
+          <button data-view="dictionary" class="mobile-nav-btn flex flex-col items-center justify-center text-secondary py-1 px-2 text-[10px]">
+            <svg class="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+            <span>Lexicon</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modals Container -->
+    <div id="modal-container" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+      <div id="modal-card" class="bg-paper border border-rule rounded-xl max-w-lg w-full p-6 shadow-xl relative transition-all">
+        <!-- Dynamically injected modal content -->
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Main JavaScript App Entry (Vanilla ES Module) -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

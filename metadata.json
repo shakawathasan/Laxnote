@@ -1,0 +1,6 @@
+{
+  "name": "LexNote — My AI Law Notebook",
+  "description": "A personal AI law notebook for LLB students to record lectures, organize structured legal notes in Bangla and English, perform OCR, and research legal concepts.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,47 @@
+{
+  "id": "/",
+  "name": "LexNote — My AI Law Notebook",
+  "short_name": "LexNote",
+  "description": "Personal AI law notebook for LLB students to record lectures, organize notes, and study legal concepts.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF8F3",
+  "theme_color": "#23483F",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["education", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "New Law Note",
+      "short_name": "New Note",
+      "url": "/#editor",
+      "description": "Create a new legal lecture note"
+    },
+    {
+      "name": "Dictate Lecture",
+      "short_name": "Record",
+      "url": "/#voice",
+      "description": "Start live classroom speech recording"
+    },
+    {
+      "name": "Legal Dictionary",
+      "short_name": "Dictionary",
+      "url": "/#dictionary",
+      "description": "Search English–Bangla legal terms"
+    }
+  ]
+}
